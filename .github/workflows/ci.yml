@@ -1,0 +1,38 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify README present
+        run: test -f README.md && echo "lint ok"
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Smoke test
+        run: test -f VERSION && echo "tests pass"
+  build:
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build artifact
+        run: echo "build $(cat VERSION)" > artifact.txt && tar czf artifact.tar.gz artifact.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: artifact
+          path: artifact.tar.gz
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to staging (simulated)
+        run: echo "deployed $(cat VERSION) to staging at $(date -u +%%FT%%TZ)"
