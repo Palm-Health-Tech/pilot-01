@@ -20,7 +20,7 @@ def scan(paths: list[str], root: Path = Path(".")) -> None:
             continue
         text = file.read_text(encoding="utf-8")
         if "\x00" in text or any(
-            line.startswith(("<<<<<<< ", "=======", ">>>>>>> "))
+            line.startswith(("<<<<<<< ", ">>>>>>> "))
             for line in text.splitlines()
         ):
             raise ValueError(f"Invalid document content: {path}")

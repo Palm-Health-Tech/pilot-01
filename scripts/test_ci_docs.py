@@ -43,6 +43,8 @@ class DocsCITests(unittest.TestCase):
             doc = root / "README.md"
             doc.write_text("okay\n", encoding="utf-8")
             scan(["README.md"], root)
+            doc.write_text("Title\n=======\n", encoding="utf-8")
+            scan(["README.md"], root)
             doc.write_text("<<<<<<< HEAD\n", encoding="utf-8")
             with self.assertRaises(ValueError):
                 scan(["README.md"], root)
