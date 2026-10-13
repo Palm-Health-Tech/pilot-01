@@ -5,7 +5,29 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  changes:
+    name: Classify README changes
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.scope.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Test prose classifier
+        run: python3 scripts/test_ci_docs.py -v
+      - name: Scan README or select project checks
+        id: scope
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BASE: ${{ github.event.before }}
+        run: python3 scripts/ci_docs.py
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -13,6 +35,8 @@ jobs:
       - name: Verify README present
         run: test -f README.md && echo "lint ok"
   test:
+    needs: changes
+    if: always() && (needs.changes.result != 'success' || needs.changes.outputs.code != 'false')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
